@@ -1,5 +1,3 @@
-# Librerias
-
 library("fastqcr")
 library('ggplot2')
 library(ggpubr)
@@ -12,21 +10,23 @@ library(scales)
 library(RColorBrewer)
 
 # Exploración de los archivos crudos (extensión bam)
-read_bam <- read.delim("file_bam_reads_1.txt",sep = ' ',header = FALSE)
-colnames(read_bam)<-c('Samples','Bam reads')
-bam_bed<-merge(read_bam,min_bed,by='Samples',all=TRUE)
-colnames(bam_bed)[3]<-'Bed'
-datatable(bam_bed[order(bam_bed$`Bam reads`,decreasing = T),])
-min_bed %>% ggplot(aes(x=Samples,y=`Number of reads`))+geom_bar(stat="identity",fill='#4682b4',color='black')+
-  theme_classic() + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ggtitle('Numero de reads por muestra')+theme(plot.title = element_text(hjust = 0.5))+ylab('Número de reads')+xlab('Muestras')
-## Frecuencia de la cantidad de reads
-min_bed <- as.data.frame(min_bed)
-ggplot(min_bed,aes(y=`Number of reads`))+geom_boxplot()+ylab('Número de reads')+
-  theme_classic() +  theme(axis.title.x=element_blank(),
-                           axis.text.x=element_blank(),
-                           axis.ticks.x=element_blank())
-quantile(min_bed$`Number of reads`)
+fastq_table <- read.csv("fastq_steph.txt",sep='\t')
+fastq_table$X..GC <- substr(fastq_table$X..GC,1,2)
+fastq_table$X..Dups <- substr(fastq_table$X..Dups,1,2)
+ggplot(fastq_table,aes(x=M.Seqs))+geom_histogram(aes(y=..density..),position="identity",color="black",bins = 40,size=1,fill="#FF6A6A",alpha=0.6)+
+  geom_density(color="#B22222",fill="#FF6A6A",alpha=0.3)+scale_x_discrete(limit = seq(0,300,30))+theme_classic()+ylab("Densidad")
+A<-ggplot(fastq_table,aes(x='',y=as.numeric(X..GC)))+
+  geom_boxplot(color="black",fill="#FF6A6A",alpha=0.5)+ ylab("% Contenido de GC")+
+  theme_classic()+
+  theme(axis.title.x = element_blank())
+B<-ggplot(fastq_table,aes(x='',y=as.numeric(X..Dups)))+
+  geom_boxplot(color="black",fill="#FF6A6A",alpha=0.5)+ ylab("% Número de duplicados")+
+  theme_classic()+
+  theme(axis.title.x = element_blank())
+ggarrange(A,B,ncol=2,nrow=1)
+table_result <- fastq_table
+colnames(table_result)<-c('Muestras','Duplicados','Contenido_GC','Longitud','M_Seqs')
+table_result$Muestras <-substr(as.vector(table_result$Muestras),34,41)
 
 # Tablas de starFusion
 starFusion <- read.csv("all_samples.csv",sep = '\t')
